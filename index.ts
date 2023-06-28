@@ -3,9 +3,23 @@ import csvParser from 'csv-parser';
 import Transaction from './Transaction';
 import Account from "./Account";
 import readline from 'readline';
+import * as log4js from "log4js";
 
 const transactions: Transaction[] = [];
 let accountDict = new Map<string, Account>();
+
+log4js.configure({
+    appenders: {
+        file: { type: 'fileSync', filename: 'logs/debug.log' }
+    },
+    categories: {
+        default: { appenders: ['file'], level: 'debug'}
+    }
+});
+
+const logger = log4js.getLogger();
+logger.level = "debug";
+logger.info("Program start");
 
 readCSV();
 
@@ -30,16 +44,18 @@ async function readInput(): Promise<string> {
 }
 
 function readCSV (): void {
-    fs.createReadStream('Transactions2014.csv')
+    fs.createReadStream('Transactions2015.csv')
         .pipe(csvParser())
         .on('data', (data) => {
             let transactionAmount = parseFloat(data['Amount']);
 
             if (!accountDict.has(data['From'])) {
                 accountDict.set(data['From'], new Account(data['From']));
+                logger.info("New account created: " + data['From']);
             }
             if (!accountDict.has(data['To'])) {
                 accountDict.set(data['To'], new Account(data['To']));
+                logger.info("New account created: " + data['To']);
             }
 
             const transaction = new Transaction(
@@ -50,6 +66,8 @@ function readCSV (): void {
                 transactionAmount
             );
             transactions.push(transaction);
+            logger.info("Transaction read: date:" + data['Date'] + ", from:" + accountDict.get(data['From'])! +
+                ", to:" + accountDict.get(data['To'])! + ", narrative:" + data['Narrative'] + ", amount:" + transactionAmount);
 
             accountDict.get(data['From'])!.deductMoney(transactionAmount);
             accountDict.get(data['To'])!.addMoney(transactionAmount);
@@ -59,6 +77,7 @@ function readCSV (): void {
             const userInputtedStringSplit = userInputtedString.split(" ");
 
             if (userInputtedString === "List All") {
+                logger.info("User chose List All");
                 outputAccountBalances();
             }
             else if (userInputtedStringSplit[0] === "List") {
@@ -67,18 +86,22 @@ function readCSV (): void {
                     const firstHalf = userInputtedString.substring(0, firstSpaceIndex);
                     const secondHalf = userInputtedString.substring(firstSpaceIndex + 1);
                     if (accountDict.has(secondHalf)) {
+                        logger.info("User chose List [Account]");
                         ouputAccountTransactions(secondHalf);
                     }
                     else {
                         console.log("Name doesn't exist");
+                        logger.error("Name doesn't exist");
                     }
                 }
                 else {
                     console.log("Invalid choice");
+                    logger.error("Invalid user input");
                 }
             }
             else {
                 console.log("Invalid choice");
+                logger.error("Invalid user input");
             }
         });
 }
