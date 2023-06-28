@@ -8,9 +8,6 @@ const transactions: Transaction[] = [];
 let accountDict = new Map<string, Account>();
 
 readCSV();
-// const name = readlineSync.question('Enter your name: ');
-// console.log(`Hello, ${name}!`);
-// outputAccountBalances();
 
 function getUserChoice(): Promise<string> {
     const rl = readline.createInterface({
@@ -19,7 +16,7 @@ function getUserChoice(): Promise<string> {
     });
 
     return new Promise((resolve) => {
-        rl.question('Select an option (1 or 2): ', (answer) => {
+        rl.question('Select an option (List All or List [Account]): ', (answer) => {
             rl.close();
             resolve(answer);
         });
