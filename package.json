@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "csv-parser": "^3.0.0",
-    "moment": "^2.29.4"
+    "moment": "^2.29.4",
+    "readline-sync": "^1.4.10"
   }
 }
