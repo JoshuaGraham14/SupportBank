@@ -2,7 +2,7 @@ import fs, {read} from 'fs';
 import csvParser from 'csv-parser';
 import Transaction from './Transaction';
 import Account from "./Account";
-// import readlineSync from 'readline-sync';
+import readline from 'readline';
 
 const transactions: Transaction[] = [];
 let accountDict = new Map<string, Account>();
@@ -11,6 +11,26 @@ readCSV();
 // const name = readlineSync.question('Enter your name: ');
 // console.log(`Hello, ${name}!`);
 // outputAccountBalances();
+
+function getUserChoice(): Promise<string> {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
+    return new Promise((resolve) => {
+        rl.question('Select an option (1 or 2): ', (answer) => {
+            rl.close();
+            resolve(answer);
+        });
+    });
+}
+
+async function readInput(): Promise<string> {
+    const userChoice = await getUserChoice();
+
+    return userChoice;
+}
 
 function readCSV (): void {
     fs.createReadStream('Transactions2014.csv')
@@ -37,9 +57,32 @@ function readCSV (): void {
             accountDict.get(data['From'])!.deductMoney(transactionAmount);
             accountDict.get(data['To'])!.addMoney(transactionAmount);
         })
-        .on('end', () => {
-            outputAccountBalances();
-            ouputAccountTransactions("Ben B");
+        .on('end', async () => {
+            let userInputtedString = await readInput();
+            const userInputtedStringSplit = userInputtedString.split(" ");
+
+            if (userInputtedString === "List All") {
+                outputAccountBalances();
+            }
+            else if (userInputtedStringSplit[0] === "List") {
+                const firstSpaceIndex = userInputtedString.indexOf(" ");
+                if (firstSpaceIndex !== -1) {
+                    const firstHalf = userInputtedString.substring(0, firstSpaceIndex);
+                    const secondHalf = userInputtedString.substring(firstSpaceIndex + 1);
+                    if (accountDict.has(secondHalf)) {
+                        ouputAccountTransactions(secondHalf);
+                    }
+                    else {
+                        console.log("Name doesn't exist");
+                    }
+                }
+                else {
+                    console.log("Invalid choice");
+                }
+            }
+            else {
+                console.log("Invalid choice");
+            }
         });
 }
 
@@ -75,4 +118,3 @@ function ouputAccountTransactions(accountName: string): void {
     console.log("-------------------------------------------------------------------");
     console.log("TOTAL: " + `${balance.toFixed(2)} ${status}`);
 }
-
